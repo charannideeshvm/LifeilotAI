@@ -34,10 +34,16 @@ app = FastAPI(
 # block the requests for security reasons.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=[
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "https://lifepilot-ai.web.app",
+        "https://lifepilot-ai.firebaseapp.com",
+        # Add your Cloud Run URL here after deployment
+    ],
     allow_credentials=True,
-    allow_methods=["*"],    # Allow GET, POST, PUT, DELETE, etc.
-    allow_headers=["*"],    # Allow all headers including Authorization
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Register Routes ---
@@ -70,11 +76,14 @@ async def health():
 # --- Start Server ---
 # This block only runs when you execute: python main.py
 # uvicorn is the ASGI server that runs FastAPI
+# --- Start Server ---
 if __name__ == "__main__":
-    logger.info(f"Starting LifePilot AI on port {settings.PORT}")
+    import os
+    port = int(os.getenv("PORT", 8000))
+    logger.info(f"Starting {settings.APP_NAME} on port {port}")
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",     # Listen on all network interfaces
-        port=settings.PORT,
-        reload=True         # Auto-restart when you save a file (development only)
+        host="0.0.0.0",
+        port=port,
+        reload=(settings.ENVIRONMENT == "development")
     )
