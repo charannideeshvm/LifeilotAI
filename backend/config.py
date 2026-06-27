@@ -8,8 +8,7 @@ from dotenv import load_dotenv
 # Load the .env file from the project root
 # dirname(__file__) = the backend folder
 # join(.., '..', '.env') goes one level up to the root
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
-
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 class Settings:
     """
     All configuration values for the application.
@@ -39,13 +38,10 @@ class Settings:
     ).split(",")
 
     def validate(self):
-        """Call this on startup to catch missing required config."""
-        errors = []
         if not self.GEMINI_API_KEY:
-            errors.append("GEMINI_API_KEY is missing from .env")
-        if errors:
-            for e in errors:
-                print(f"⚠️  CONFIG WARNING: {e}")
+            print("⚠️  CONFIG WARNING: GEMINI_API_KEY is missing from .env")
+        else:
+            print("✅ GEMINI_API_KEY loaded successfully")
 
 # Create a single shared instance used everywhere
 settings = Settings()
