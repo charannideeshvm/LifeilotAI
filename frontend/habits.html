@@ -3,40 +3,295 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PAGE NAME — LifePilot AI</title>
+  <title>Habits — LifePilot AI</title>
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/dark-mode.css" />
+  <style>
+    .habit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .habit-card:hover { box-shadow: var(--shadow-md); }
+    .habit-header { display:flex; justify-content:space-between; align-items:center; }
+    .habit-name   { font-size:1rem; font-weight:600; color:var(--text-main); }
+    .habit-meta   { font-size:0.78rem; color:var(--text-muted); }
+    .streak-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      background:#fff7ed; color:#c2410c;
+      padding:4px 10px; border-radius:999px;
+      font-size:0.8rem; font-weight:700;
+    }
+    body.dark .streak-badge { background:rgba(245,158,11,0.2); color:#fcd34d; }
+    .done-btn {
+      width:100%; padding:10px;
+      border-radius:var(--radius-sm);
+      border:2px solid var(--success);
+      background:transparent; color:var(--success);
+      font-weight:700; font-size:0.875rem; cursor:pointer;
+      transition:var(--transition);
+    }
+    .done-btn.completed { background:var(--success); color:#fff; }
+    .done-btn:hover:not(.completed) { background:var(--success); color:#fff; }
+    .habits-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:16px; }
+    .day-dots { display:flex; gap:4px; }
+    .day-dot {
+      width:8px; height:8px; border-radius:50%;
+      background:var(--border);
+    }
+    .day-dot.active { background:var(--success); }
+  </style>
 </head>
 <body>
 <div class="app-shell">
-  <!-- Copy sidebar from dashboard.html, update the active nav-item -->
-  <!-- Copy topbar from dashboard.html, update title -->
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><h1>🧭 LifePilot AI</h1><p>Never Miss What Matters</p></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+      <a href="today.html"     class="nav-item"><span class="icon">☀️</span> Today's Plan</a>
+      <a href="tasks.html"     class="nav-item"><span class="icon">✅</span> Tasks</a>
+      <a href="calendar.html"  class="nav-item"><span class="icon">📅</span> Calendar</a>
+      <div class="nav-section-label">Growth</div>
+      <a href="goals.html"     class="nav-item"><span class="icon">🎯</span> Goals</a>
+      <a href="habits.html"    class="nav-item active"><span class="icon">🔄</span> Habits</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📊</span> Analytics</a>
+      <div class="nav-section-label">AI</div>
+      <a href="chat.html"      class="nav-item"><span class="icon">🤖</span> AI Coach</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div class="user-info">
+          <div class="name" id="sidebarName">Loading...</div>
+          <div class="email" id="sidebarEmail"></div>
+        </div>
+      </div>
+      <a href="settings.html" class="nav-item" style="margin-top:8px"><span class="icon">⚙️</span> Settings</a>
+      <button onclick="handleLogout()" class="nav-item" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.7);text-align:left;margin-top:4px">
+        <span class="icon">🚪</span> Logout
+      </button>
+    </div>
+  </aside>
+  <div id="sidebarOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99"></div>
+
   <div class="main-content">
     <header class="topbar">
       <div class="topbar-left">
         <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
-        <div style="margin-left:8px"><h2>Page Title</h2></div>
+        <div style="margin-left:8px">
+          <h2>🔄 Habits</h2>
+          <p id="habitsCountLabel">Loading...</p>
+        </div>
       </div>
       <div class="topbar-right">
         <button class="dark-toggle" id="darkToggle">🌙</button>
+        <button class="btn btn-primary btn-sm" onclick="openHabitModal()">+ New Habit</button>
       </div>
     </header>
+
     <main class="page-content">
-      <div class="card">
-        <div class="empty-state">
-          <div class="icon">🚧</div>
-          <h3>Coming in next milestones</h3>
-          <p>This page will be built out fully.</p>
+      <!-- Today's streak banner -->
+      <div class="card" style="margin-bottom:20px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <h3 style="color:#fff;margin-bottom:4px">🔥 Keep Your Streak Alive!</h3>
+            <p style="color:rgba(255,255,255,0.8);font-size:0.875rem">
+              Mark today's habits as done to maintain your streaks.
+            </p>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:2rem;font-weight:800;color:#fff" id="doneCountBanner">0/0</div>
+            <div style="font-size:0.78rem;color:rgba(255,255,255,0.7)">habits done today</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="habits-grid" id="habitsGrid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="icon">⏳</div><p>Loading habits...</p>
         </div>
       </div>
     </main>
   </div>
 </div>
+
+<!-- Habit Modal -->
+<div class="modal-overlay" id="habitModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">New Habit</h3>
+      <button class="modal-close" onclick="closeHabitModal()">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Habit Name *</label>
+      <input type="text" id="habitTitle" class="form-control" placeholder="e.g. Read for 20 minutes" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Frequency</label>
+        <select id="habitFreq" class="form-control">
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select id="habitCategory" class="form-control">
+          <option>Health</option><option>Learning</option><option>Mindfulness</option>
+          <option>Fitness</option><option>Productivity</option><option>Personal</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeHabitModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveHabit()">Create Habit</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
+<script>
+  let allHabits = [];
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  auth.onAuthStateChanged(async user => {
+    if (!user) return;
+    document.getElementById('sidebarName').textContent   = user.displayName || 'User';
+    document.getElementById('sidebarEmail').textContent  = user.email;
+    document.getElementById('sidebarAvatar').textContent = (user.displayName || 'U')[0].toUpperCase();
+    await loadHabits();
+  });
+
+  async function loadHabits() {
+    try {
+      const data = await apiCall('/api/habits');
+      allHabits = data.habits || [];
+      renderHabits();
+    } catch(e) {
+      document.getElementById('habitsGrid').innerHTML =
+        `<div class="empty-state" style="grid-column:1/-1"><div class="icon">⚠️</div><p>Could not load habits.</p></div>`;
+    }
+  }
+
+  function renderHabits() {
+    const grid = document.getElementById('habitsGrid');
+    const done = allHabits.filter(h => (h.completedDates || []).includes(todayStr)).length;
+    document.getElementById('habitsCountLabel').textContent =
+      `${allHabits.length} habit${allHabits.length !== 1 ? 's' : ''} tracked`;
+    document.getElementById('doneCountBanner').textContent = `${done}/${allHabits.length}`;
+
+    if (!allHabits.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+        <div class="icon">🔄</div>
+        <h3>No habits yet</h3>
+        <p>Start tracking a daily habit to build your streak.</p>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="openHabitModal()">+ Create First Habit</button>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = allHabits.map(h => {
+      const completed  = (h.completedDates || []).includes(todayStr);
+      const streak     = h.streak || 0;
+      const longest    = h.longestStreak || 0;
+      const totalDone  = (h.completedDates || []).length;
+
+      // Last 7 days dots
+      const last7 = Array.from({length:7}, (_,i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6-i));
+        return (h.completedDates || []).includes(d.toISOString().split('T')[0]);
+      });
+
+      return `
+      <div class="habit-card">
+        <div class="habit-header">
+          <div>
+            <div class="habit-name">${h.title}</div>
+            <div class="habit-meta">${h.frequency || 'daily'} · ${h.category || 'Personal'}</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="deleteHabit('${h.id}')">🗑</button>
+        </div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <span class="streak-badge">🔥 ${streak} day streak</span>
+          <span class="badge badge-gray">Best: ${longest}</span>
+          <span class="badge badge-info">Total: ${totalDone}</span>
+        </div>
+
+        <div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px">Last 7 days</div>
+          <div class="day-dots">
+            ${last7.map(d => `<div class="day-dot ${d ? 'active' : ''}"></div>`).join('')}
+          </div>
+        </div>
+
+        <button class="done-btn ${completed ? 'completed' : ''}"
+                id="habitBtn-${h.id}"
+                onclick="markHabitDone('${h.id}')">
+          ${completed ? '✅ Done Today!' : '☐ Mark Done Today'}
+        </button>
+      </div>`;
+    }).join('');
+  }
+
+  async function markHabitDone(habitId) {
+    try {
+      const updated = await apiCall(`/api/habits/${habitId}/complete`, 'POST');
+      const idx = allHabits.findIndex(h => h.id === habitId);
+      if (idx !== -1) allHabits[idx] = updated;
+      renderHabits();
+      showToast('🔥 Habit completed! Streak updated!', 'success');
+    } catch(e) { showToast('Failed to mark habit', 'error'); }
+  }
+
+  async function deleteHabit(habitId) {
+    if (!confirm('Delete this habit? Your streak will be lost.')) return;
+    try {
+      await apiCall(`/api/habits/${habitId}`, 'DELETE');
+      allHabits = allHabits.filter(h => h.id !== habitId);
+      renderHabits();
+      showToast('Habit deleted', 'info');
+    } catch(e) { showToast('Failed to delete habit', 'error'); }
+  }
+
+  function openHabitModal() {
+    document.getElementById('habitTitle').value = '';
+    document.getElementById('habitModal').classList.add('active');
+  }
+  function closeHabitModal() {
+    document.getElementById('habitModal').classList.remove('active');
+  }
+
+  async function saveHabit() {
+    const title    = document.getElementById('habitTitle').value.trim();
+    const freq     = document.getElementById('habitFreq').value;
+    const category = document.getElementById('habitCategory').value;
+    if (!title) { showToast('Habit name is required', 'warning'); return; }
+    try {
+      const created = await apiCall('/api/habits', 'POST', { title, frequency: freq, category });
+      allHabits.unshift(created);
+      renderHabits();
+      closeHabitModal();
+      showToast('Habit created!', 'success');
+    } catch(e) { showToast('Failed to create habit: ' + e.message, 'error'); }
+  }
+
+  document.getElementById('habitModal').addEventListener('click', function(e) {
+    if (e.target === this) closeHabitModal();
+  });
+</script>
 </body>
 </html>

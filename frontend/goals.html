@@ -3,40 +3,307 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PAGE NAME — LifePilot AI</title>
+  <title>Goals — LifePilot AI</title>
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/dark-mode.css" />
+  <style>
+    .goal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: var(--transition);
+    }
+    .goal-card:hover { box-shadow: var(--shadow-md); }
+    .goal-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+    .goal-title  { font-size:1rem; font-weight:600; color:var(--text-main); }
+    .goal-meta   { font-size:0.78rem; color:var(--text-muted); margin-top:3px; }
+    .goal-progress-label { display:flex; justify-content:space-between; margin-bottom:6px; }
+    .goal-progress-label span { font-size:0.8rem; }
+    .goal-milestones { margin-top:12px; }
+    .milestone-item  { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.83rem; }
+    .milestone-item:last-child { border:none; }
+    .milestone-check {
+      width:18px; height:18px; border-radius:50%;
+      border:2px solid var(--border); cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      font-size:0.7rem; transition:var(--transition); flex-shrink:0;
+    }
+    .milestone-check.done { background:var(--success); border-color:var(--success); color:#fff; }
+    .goals-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:16px; }
+  </style>
 </head>
 <body>
 <div class="app-shell">
-  <!-- Copy sidebar from dashboard.html, update the active nav-item -->
-  <!-- Copy topbar from dashboard.html, update title -->
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><h1>🧭 LifePilot AI</h1><p>Never Miss What Matters</p></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+      <a href="today.html"     class="nav-item"><span class="icon">☀️</span> Today's Plan</a>
+      <a href="tasks.html"     class="nav-item"><span class="icon">✅</span> Tasks</a>
+      <a href="calendar.html"  class="nav-item"><span class="icon">📅</span> Calendar</a>
+      <div class="nav-section-label">Growth</div>
+      <a href="goals.html"     class="nav-item active"><span class="icon">🎯</span> Goals</a>
+      <a href="habits.html"    class="nav-item"><span class="icon">🔄</span> Habits</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📊</span> Analytics</a>
+      <div class="nav-section-label">AI</div>
+      <a href="chat.html"      class="nav-item"><span class="icon">🤖</span> AI Coach</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div class="user-info">
+          <div class="name" id="sidebarName">Loading...</div>
+          <div class="email" id="sidebarEmail"></div>
+        </div>
+      </div>
+      <a href="settings.html" class="nav-item" style="margin-top:8px"><span class="icon">⚙️</span> Settings</a>
+      <button onclick="handleLogout()" class="nav-item" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.7);text-align:left;margin-top:4px">
+        <span class="icon">🚪</span> Logout
+      </button>
+    </div>
+  </aside>
+  <div id="sidebarOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99"></div>
+
   <div class="main-content">
     <header class="topbar">
       <div class="topbar-left">
         <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
-        <div style="margin-left:8px"><h2>Page Title</h2></div>
+        <div style="margin-left:8px">
+          <h2>🎯 Goals</h2>
+          <p id="goalsCountLabel">Loading...</p>
+        </div>
       </div>
       <div class="topbar-right">
         <button class="dark-toggle" id="darkToggle">🌙</button>
+        <button class="btn btn-primary btn-sm" onclick="openGoalModal()">+ New Goal</button>
       </div>
     </header>
+
     <main class="page-content">
-      <div class="card">
-        <div class="empty-state">
-          <div class="icon">🚧</div>
-          <h3>Coming in next milestones</h3>
-          <p>This page will be built out fully.</p>
+      <div class="goals-grid" id="goalsGrid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="icon">⏳</div><p>Loading goals...</p>
         </div>
       </div>
     </main>
   </div>
 </div>
+
+<!-- Goal Modal -->
+<div class="modal-overlay" id="goalModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="goalModalTitle">New Goal</h3>
+      <button class="modal-close" onclick="closeGoalModal()">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Goal Title *</label>
+      <input type="text" id="goalTitle" class="form-control" placeholder="e.g. Run a 5K" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea id="goalDesc" class="form-control" rows="2" placeholder="Why does this matter to you?"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select id="goalCategory" class="form-control">
+          <option>Health</option><option>Career</option><option>Finance</option>
+          <option>Learning</option><option>Personal</option><option>Relationships</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Date</label>
+        <input type="date" id="goalDate" class="form-control" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Milestones (one per line)</label>
+      <textarea id="goalMilestones" class="form-control" rows="4"
+        placeholder="Week 1: Research&#10;Week 2: Start practice&#10;Week 3: First test run"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeGoalModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGoal()">Create Goal</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
+<script>
+  let allGoals = [];
+
+  auth.onAuthStateChanged(async user => {
+    if (!user) return;
+    document.getElementById('sidebarName').textContent   = user.displayName || 'User';
+    document.getElementById('sidebarEmail').textContent  = user.email;
+    document.getElementById('sidebarAvatar').textContent = (user.displayName || 'U')[0].toUpperCase();
+    await loadGoals();
+  });
+
+  async function loadGoals() {
+    try {
+      const data = await apiCall('/api/goals');
+      allGoals = data.goals || [];
+      renderGoals();
+    } catch(e) {
+      document.getElementById('goalsGrid').innerHTML =
+        `<div class="empty-state" style="grid-column:1/-1"><div class="icon">⚠️</div><p>Could not load goals. Is the backend running?</p></div>`;
+    }
+  }
+
+  function renderGoals() {
+    const grid = document.getElementById('goalsGrid');
+    document.getElementById('goalsCountLabel').textContent =
+      `${allGoals.length} goal${allGoals.length !== 1 ? 's' : ''} tracked`;
+
+    if (!allGoals.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+        <div class="icon">🎯</div>
+        <h3>No goals yet</h3>
+        <p>Set your first goal and break it into milestones.</p>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="openGoalModal()">+ Create First Goal</button>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = allGoals.map(g => {
+      const progress    = g.progress || 0;
+      const milestones  = g.milestones || [];
+      const doneMiles   = milestones.filter(m => m.done).length;
+      const targetLabel = g.targetDate ? formatDate(g.targetDate) : 'No deadline';
+
+      return `
+      <div class="goal-card">
+        <div class="goal-header">
+          <div>
+            <div class="goal-title">${g.title}</div>
+            <div class="goal-meta">📅 ${targetLabel} · ${g.category || 'Personal'}</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-sm" onclick="deleteGoal('${g.id}')">🗑</button>
+          </div>
+        </div>
+
+        ${g.description ? `<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px">${g.description}</p>` : ''}
+
+        <div class="goal-progress-label">
+          <span style="color:var(--text-muted)">Progress</span>
+          <span style="font-weight:700;color:var(--primary)">${progress}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${progress}%;background:${progress >= 100 ? 'var(--success)' : 'var(--primary)'}"></div>
+        </div>
+
+        ${milestones.length ? `
+        <div class="goal-milestones">
+          <div style="font-size:0.78rem;font-weight:600;color:var(--text-muted);margin-bottom:6px">
+            MILESTONES (${doneMiles}/${milestones.length})
+          </div>
+          ${milestones.map((m, i) => `
+            <div class="milestone-item">
+              <div class="milestone-check ${m.done ? 'done' : ''}"
+                   onclick="toggleMilestone('${g.id}', ${i})">
+                ${m.done ? '✓' : ''}
+              </div>
+              <span style="${m.done ? 'text-decoration:line-through;opacity:0.6' : ''}">${m.title}</span>
+            </div>`).join('')}
+        </div>` : ''}
+
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <input type="range" min="0" max="100" value="${progress}"
+            style="flex:1;accent-color:var(--primary)"
+            onchange="updateProgress('${g.id}', this.value)"
+            oninput="this.nextElementSibling.textContent=this.value+'%'" />
+          <span style="font-size:0.8rem;min-width:36px;color:var(--primary);font-weight:700">${progress}%</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function toggleMilestone(goalId, index) {
+    const goal = allGoals.find(g => g.id === goalId);
+    if (!goal) return;
+    const milestones = [...(goal.milestones || [])];
+    milestones[index].done = !milestones[index].done;
+    const donePct = Math.round((milestones.filter(m => m.done).length / milestones.length) * 100);
+    try {
+      await apiCall(`/api/goals/${goalId}`, 'PUT', { milestones, progress: donePct });
+      goal.milestones = milestones;
+      goal.progress   = donePct;
+      renderGoals();
+    } catch(e) { showToast('Failed to update milestone', 'error'); }
+  }
+
+  async function updateProgress(goalId, value) {
+    try {
+      await apiCall(`/api/goals/${goalId}`, 'PUT', { progress: parseInt(value) });
+      const g = allGoals.find(x => x.id === goalId);
+      if (g) g.progress = parseInt(value);
+    } catch(e) { showToast('Failed to update progress', 'error'); }
+  }
+
+  async function deleteGoal(goalId) {
+    if (!confirm('Delete this goal?')) return;
+    try {
+      await apiCall(`/api/goals/${goalId}`, 'DELETE');
+      allGoals = allGoals.filter(g => g.id !== goalId);
+      renderGoals();
+      showToast('Goal deleted', 'info');
+    } catch(e) { showToast('Failed to delete goal', 'error'); }
+  }
+
+  function openGoalModal() {
+    document.getElementById('goalTitle').value      = '';
+    document.getElementById('goalDesc').value       = '';
+    document.getElementById('goalMilestones').value = '';
+    document.getElementById('goalDate').value       = '';
+    document.getElementById('goalModal').classList.add('active');
+  }
+
+  function closeGoalModal() {
+    document.getElementById('goalModal').classList.remove('active');
+  }
+
+  async function saveGoal() {
+    const title      = document.getElementById('goalTitle').value.trim();
+    const desc       = document.getElementById('goalDesc').value.trim();
+    const category   = document.getElementById('goalCategory').value;
+    const targetDate = document.getElementById('goalDate').value;
+    const milestonesRaw = document.getElementById('goalMilestones').value;
+
+    if (!title) { showToast('Goal title is required', 'warning'); return; }
+
+    const milestones = milestonesRaw
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(s => ({ title: s, done: false }));
+
+    try {
+      const created = await apiCall('/api/goals', 'POST', {
+        title, description: desc, category,
+        targetDate: targetDate ? new Date(targetDate).toISOString() : null,
+        milestones
+      });
+      allGoals.unshift(created);
+      renderGoals();
+      closeGoalModal();
+      showToast('Goal created!', 'success');
+    } catch(e) { showToast('Failed to create goal: ' + e.message, 'error'); }
+  }
+
+  document.getElementById('goalModal').addEventListener('click', function(e) {
+    if (e.target === this) closeGoalModal();
+  });
+</script>
 </body>
 </html>

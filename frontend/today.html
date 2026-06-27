@@ -3,40 +3,278 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PAGE NAME — LifePilot AI</title>
+  <title>Today's Plan — LifePilot AI</title>
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/dark-mode.css" />
+  <style>
+    .plan-slot {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+      transition: var(--transition);
+    }
+    .plan-slot:hover { box-shadow: var(--shadow-md); }
+    .slot-time {
+      min-width: 80px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      padding-top: 2px;
+    }
+    .slot-body { flex: 1; }
+    .slot-title { font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
+    .slot-duration { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .slot-tip {
+      font-size: 0.78rem; color: var(--text-muted);
+      margin-top: 6px; padding: 6px 10px;
+      background: var(--bg); border-radius: var(--radius-sm);
+      border-left: 3px solid var(--primary);
+    }
+    .ai-brief-box {
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      border-radius: var(--radius);
+      padding: 24px;
+      color: #fff;
+      margin-bottom: 24px;
+    }
+    .ai-brief-box h3 { color: #fff; margin-bottom: 8px; }
+    .ai-brief-box p  { color: rgba(255,255,255,0.9); font-size: 0.9rem; line-height:1.7; }
+    .summary-pills { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+    .summary-pill {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px; border-radius:999px;
+      font-size: 0.78rem; color: #fff; font-weight:600;
+    }
+  </style>
 </head>
 <body>
 <div class="app-shell">
-  <!-- Copy sidebar from dashboard.html, update the active nav-item -->
-  <!-- Copy topbar from dashboard.html, update title -->
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><h1>🧭 LifePilot AI</h1><p>Never Miss What Matters</p></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+      <a href="today.html"     class="nav-item active"><span class="icon">☀️</span> Today's Plan</a>
+      <a href="tasks.html"     class="nav-item"><span class="icon">✅</span> Tasks</a>
+      <a href="calendar.html"  class="nav-item"><span class="icon">📅</span> Calendar</a>
+      <div class="nav-section-label">Growth</div>
+      <a href="goals.html"     class="nav-item"><span class="icon">🎯</span> Goals</a>
+      <a href="habits.html"    class="nav-item"><span class="icon">🔄</span> Habits</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📊</span> Analytics</a>
+      <div class="nav-section-label">AI</div>
+      <a href="chat.html"      class="nav-item"><span class="icon">🤖</span> AI Coach</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div class="user-info">
+          <div class="name" id="sidebarName">Loading...</div>
+          <div class="email" id="sidebarEmail"></div>
+        </div>
+      </div>
+      <a href="settings.html" class="nav-item" style="margin-top:8px"><span class="icon">⚙️</span> Settings</a>
+      <button onclick="handleLogout()" class="nav-item" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.7);text-align:left;margin-top:4px">
+        <span class="icon">🚪</span> Logout
+      </button>
+    </div>
+  </aside>
+  <div id="sidebarOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99"></div>
+
   <div class="main-content">
     <header class="topbar">
       <div class="topbar-left">
         <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
-        <div style="margin-left:8px"><h2>Page Title</h2></div>
+        <div style="margin-left:8px">
+          <h2>☀️ Today's Plan</h2>
+          <p id="todayDateLabel"></p>
+        </div>
       </div>
       <div class="topbar-right">
         <button class="dark-toggle" id="darkToggle">🌙</button>
+        <button class="btn btn-primary btn-sm" onclick="generatePlan()">🤖 Generate AI Plan</button>
       </div>
     </header>
+
     <main class="page-content">
-      <div class="card">
-        <div class="empty-state">
-          <div class="icon">🚧</div>
-          <h3>Coming in next milestones</h3>
-          <p>This page will be built out fully.</p>
+
+      <!-- AI Brief Banner -->
+      <div class="ai-brief-box" id="aiBriefBox" style="display:none">
+        <h3>🤖 Your AI Daily Brief</h3>
+        <p id="aiBriefText">Generating your personalized brief...</p>
+        <div class="summary-pills" id="summaryPills"></div>
+      </div>
+
+      <div class="grid-2" style="gap:20px">
+
+        <!-- AI Generated Schedule -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📅 AI Generated Schedule</div>
+              <div class="card-subtitle" id="scheduleSubtitle">Click "Generate AI Plan" to start</div>
+            </div>
+            <span id="totalHoursLabel" class="badge badge-primary"></span>
+          </div>
+          <div id="scheduleContainer">
+            <div class="empty-state">
+              <div class="icon">🤖</div>
+              <h3>No plan yet</h3>
+              <p>Click "Generate AI Plan" and Gemini will build your perfect schedule based on your tasks.</p>
+              <button class="btn btn-primary" style="margin-top:12px" onclick="generatePlan()">
+                🚀 Generate My Plan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Today's Tasks Quick List -->
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header">
+              <div class="card-title">📋 Due Today</div>
+              <a href="tasks.html" class="btn btn-secondary btn-sm">+ Add Task</a>
+            </div>
+            <div id="todayTasksContainer">
+              <div class="empty-state"><div class="icon">⏳</div><p>Loading...</p></div>
+            </div>
+          </div>
+
+          <!-- Focus Tip -->
+          <div class="card" id="focusTipCard" style="display:none">
+            <div class="card-title" style="margin-bottom:10px">💡 Today's Focus Tip</div>
+            <p id="focusTipText" style="font-size:0.875rem;line-height:1.7;color:var(--text-main)"></p>
+          </div>
         </div>
       </div>
     </main>
   </div>
 </div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
+<script>
+  auth.onAuthStateChanged(async user => {
+    if (!user) return;
+    document.getElementById('sidebarName').textContent   = user.displayName || 'User';
+    document.getElementById('sidebarEmail').textContent  = user.email;
+    document.getElementById('sidebarAvatar').textContent = (user.displayName || 'U')[0].toUpperCase();
+    document.getElementById('todayDateLabel').textContent =
+      new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    await loadTodayTasks();
+  });
+
+  async function loadTodayTasks() {
+    const container = document.getElementById('todayTasksContainer');
+    try {
+      const data = await apiCall('/api/tasks/today');
+      const tasks = data.tasks || [];
+      if (!tasks.length) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">🎉</div><p>Nothing due today!</p></div>`;
+        return;
+      }
+      container.innerHTML = `<div class="task-list">${tasks.map(t => `
+        <div class="task-item ${t.status === 'completed' ? 'completed' : ''}">
+          <div class="task-check ${t.status === 'completed' ? 'checked' : ''}"
+               onclick="markDoneToday('${t.id}', '${t.status}', this)">
+            ${t.status === 'completed' ? '✓' : ''}
+          </div>
+          <div class="task-body">
+            <div class="task-title">${t.title}</div>
+            <div class="task-meta">
+              ${priorityBadge(t.priority)}
+              ${t.estimatedMinutes ? '· ⏱ ' + t.estimatedMinutes + 'm' : ''}
+            </div>
+          </div>
+        </div>`).join('')}
+      </div>`;
+    } catch(e) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Could not load tasks. Is the backend running?</p></div>`;
+    }
+  }
+
+  async function generatePlan() {
+    const btn = document.querySelector('.topbar-right .btn-primary');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+    const schedContainer = document.getElementById('scheduleContainer');
+    schedContainer.innerHTML = `<div style="padding:24px;text-align:center"><span class="spinner"></span><p style="margin-top:12px;color:var(--text-muted)">Gemini is building your perfect schedule...</p></div>`;
+
+    try {
+      const data = await apiCall('/api/ai/daily-plan', 'POST');
+
+      // Show brief banner
+      const briefBox  = document.getElementById('aiBriefBox');
+      const briefText = document.getElementById('aiBriefText');
+      briefBox.style.display = 'block';
+      briefText.textContent  = data.brief || 'Have a productive day!';
+
+      const pillsEl = document.getElementById('summaryPills');
+      const pills   = [
+        data.total_hours ? `⏱ ${data.total_hours}` : null,
+        data.plan?.length ? `📋 ${data.plan.length} time blocks` : null,
+      ].filter(Boolean);
+      pillsEl.innerHTML = pills.map(p => `<span class="summary-pill">${p}</span>`).join('');
+
+      // Render schedule
+      document.getElementById('scheduleSubtitle').textContent = data.summary || '';
+      if (data.total_hours) {
+        document.getElementById('totalHoursLabel').textContent = data.total_hours;
+      }
+
+      const plan = data.plan || [];
+      if (!plan.length) {
+        schedContainer.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No tasks to schedule today.</p></div>`;
+      } else {
+        schedContainer.innerHTML = plan.map(slot => `
+          <div class="plan-slot">
+            <div class="slot-time">${slot.time || ''}</div>
+            <div class="slot-body">
+              <div class="slot-title">${slot.task || ''}</div>
+              <div class="slot-duration">⏱ ${slot.duration || ''}</div>
+              ${slot.tip ? `<div class="slot-tip">💡 ${slot.tip}</div>` : ''}
+            </div>
+          </div>`).join('');
+      }
+
+      // Show focus tip
+      if (data.focus_tip) {
+        const tipCard = document.getElementById('focusTipCard');
+        tipCard.style.display = 'block';
+        document.getElementById('focusTipText').textContent = data.focus_tip;
+      }
+
+      showToast('✅ Your AI plan is ready!', 'success');
+    } catch(e) {
+      schedContainer.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Could not generate plan. Make sure the backend is running.</p></div>`;
+      showToast('Failed to generate plan', 'error');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '🤖 Generate AI Plan';
+  }
+
+  async function markDoneToday(taskId, currentStatus, el) {
+    const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+    try {
+      await apiCall(`/api/tasks/${taskId}`, 'PUT', { status: newStatus });
+      el.className = `task-check ${newStatus === 'completed' ? 'checked' : ''}`;
+      el.textContent = newStatus === 'completed' ? '✓' : '';
+      el.closest('.task-item').classList.toggle('completed', newStatus === 'completed');
+      showToast(newStatus === 'completed' ? '✅ Task done!' : 'Marked as pending', 'success');
+    } catch(e) {
+      showToast('Failed to update task', 'error');
+    }
+  }
+</script>
 </body>
 </html>

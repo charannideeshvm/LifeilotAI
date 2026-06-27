@@ -3,40 +3,248 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PAGE NAME — LifePilot AI</title>
+  <title>Analytics — LifePilot AI</title>
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/dark-mode.css" />
+  <style>
+    .score-circle {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      display: flex; flex-direction:column;
+      align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 800;
+      border: 6px solid var(--primary);
+      color: var(--primary);
+      margin: 0 auto 12px;
+    }
+    .score-label { font-size:0.75rem; color:var(--text-muted); }
+    .category-bar { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .category-name { min-width:80px; font-size:0.83rem; color:var(--text-muted); }
+    .category-fill-wrap { flex:1; background:var(--border); border-radius:999px; height:10px; overflow:hidden; }
+    .category-fill { height:100%; border-radius:999px; background:var(--primary); }
+    .category-count { font-size:0.83rem; font-weight:600; min-width:24px; text-align:right; }
+    .report-section { margin-bottom:16px; }
+    .report-label { font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; }
+    .report-list li { font-size:0.875rem; color:var(--text-main); padding:4px 0; }
+    .report-list li::before { content:'• '; color:var(--primary); }
+  </style>
 </head>
 <body>
 <div class="app-shell">
-  <!-- Copy sidebar from dashboard.html, update the active nav-item -->
-  <!-- Copy topbar from dashboard.html, update title -->
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><h1>🧭 LifePilot AI</h1><p>Never Miss What Matters</p></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+      <a href="today.html"     class="nav-item"><span class="icon">☀️</span> Today's Plan</a>
+      <a href="tasks.html"     class="nav-item"><span class="icon">✅</span> Tasks</a>
+      <a href="calendar.html"  class="nav-item"><span class="icon">📅</span> Calendar</a>
+      <div class="nav-section-label">Growth</div>
+      <a href="goals.html"     class="nav-item"><span class="icon">🎯</span> Goals</a>
+      <a href="habits.html"    class="nav-item"><span class="icon">🔄</span> Habits</a>
+      <a href="analytics.html" class="nav-item active"><span class="icon">📊</span> Analytics</a>
+      <div class="nav-section-label">AI</div>
+      <a href="chat.html"      class="nav-item"><span class="icon">🤖</span> AI Coach</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div class="user-info">
+          <div class="name" id="sidebarName">Loading...</div>
+          <div class="email" id="sidebarEmail"></div>
+        </div>
+      </div>
+      <a href="settings.html" class="nav-item" style="margin-top:8px"><span class="icon">⚙️</span> Settings</a>
+      <button onclick="handleLogout()" class="nav-item" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.7);text-align:left;margin-top:4px">
+        <span class="icon">🚪</span> Logout
+      </button>
+    </div>
+  </aside>
+  <div id="sidebarOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99"></div>
+
   <div class="main-content">
     <header class="topbar">
       <div class="topbar-left">
         <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
-        <div style="margin-left:8px"><h2>Page Title</h2></div>
+        <div style="margin-left:8px"><h2>📊 Analytics</h2><p>Your productivity insights</p></div>
       </div>
       <div class="topbar-right">
         <button class="dark-toggle" id="darkToggle">🌙</button>
+        <button class="btn btn-primary btn-sm" onclick="generateWeeklyReport()">🤖 AI Weekly Report</button>
       </div>
     </header>
+
     <main class="page-content">
-      <div class="card">
-        <div class="empty-state">
-          <div class="icon">🚧</div>
-          <h3>Coming in next milestones</h3>
-          <p>This page will be built out fully.</p>
+
+      <!-- Overview Stats -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-icon blue">📋</div><div class="stat-info"><div class="value" id="statTotal">—</div><div class="label">Total Tasks</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="value" id="statDone">—</div><div class="label">Completed</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange">⚠️</div><div class="stat-info"><div class="value" id="statMissed">—</div><div class="label">Missed</div></div></div>
+        <div class="stat-card"><div class="stat-icon purple">📈</div><div class="stat-info"><div class="value" id="statRate">—</div><div class="label">Completion Rate</div></div></div>
+      </div>
+
+      <div class="grid-2" style="gap:20px">
+
+        <!-- Category Breakdown -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📂 Tasks by Category</div>
+          </div>
+          <div id="categoryChart">
+            <div class="empty-state"><div class="icon">⏳</div><p>Loading...</p></div>
+          </div>
+        </div>
+
+        <!-- Productivity Score -->
+        <div class="card" style="text-align:center">
+          <div class="card-title" style="margin-bottom:20px">🏆 Productivity Score</div>
+          <div class="score-circle" id="scoreCircle">—</div>
+          <p id="scoreLabel" style="font-size:0.875rem;color:var(--text-muted)">
+            Generate the AI Weekly Report to see your score
+          </p>
+          <div style="margin-top:16px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap" id="habitStatRow"></div>
+        </div>
+
+      </div>
+
+      <!-- AI Weekly Report -->
+      <div class="card" style="margin-top:20px" id="weeklyReportCard" style="display:none">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🤖 AI Weekly Report</div>
+            <div class="card-subtitle">Generated by Gemini</div>
+          </div>
+          <span class="badge badge-primary" id="reportGrade"></span>
+        </div>
+        <div id="weeklyReportContent">
+          <div class="empty-state">
+            <div class="icon">📊</div>
+            <h3>No report yet</h3>
+            <p>Click "AI Weekly Report" to generate insights.</p>
+          </div>
         </div>
       </div>
+
     </main>
   </div>
 </div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
+<script>
+  auth.onAuthStateChanged(async user => {
+    if (!user) return;
+    document.getElementById('sidebarName').textContent   = user.displayName || 'User';
+    document.getElementById('sidebarEmail').textContent  = user.email;
+    document.getElementById('sidebarAvatar').textContent = (user.displayName || 'U')[0].toUpperCase();
+    await loadAnalytics();
+  });
+
+  async function loadAnalytics() {
+    try {
+      const data = await apiCall('/api/analytics');
+      const ov   = data.overview || {};
+
+      document.getElementById('statTotal').textContent  = ov.total_tasks  || 0;
+      document.getElementById('statDone').textContent   = ov.completed    || 0;
+      document.getElementById('statMissed').textContent = ov.missed       || 0;
+      document.getElementById('statRate').textContent   = (ov.completion_rate || 0) + '%';
+
+      // Category chart
+      const cats = data.categories || {};
+      const total = Object.values(cats).reduce((a,b) => a+b, 0) || 1;
+      const colors = ['var(--primary)','var(--success)','var(--warning)','var(--danger)','var(--secondary)','#8b5cf6'];
+      document.getElementById('categoryChart').innerHTML = Object.keys(cats).length
+        ? Object.entries(cats).map(([name, count], i) => `
+          <div class="category-bar">
+            <span class="category-name">${name}</span>
+            <div class="category-fill-wrap">
+              <div class="category-fill" style="width:${Math.round(count/total*100)}%;background:${colors[i%colors.length]}"></div>
+            </div>
+            <span class="category-count">${count}</span>
+          </div>`).join('')
+        : `<div class="empty-state"><div class="icon">📭</div><p>No tasks yet</p></div>`;
+
+      // Habit stats
+      const habitStats = data.habit_stats || [];
+      document.getElementById('habitStatRow').innerHTML = habitStats.slice(0,3).map(h => `
+        <div style="text-align:center">
+          <div style="font-size:1.4rem;font-weight:700;color:var(--text-main)">${h.streak}</div>
+          <div style="font-size:0.72rem;color:var(--text-muted)">${h.title?.split(' ')[0]} streak</div>
+        </div>`).join('');
+
+    } catch(e) {
+      showToast('Could not load analytics. Is the backend running?', 'error');
+    }
+  }
+
+  async function generateWeeklyReport() {
+    const btn = document.querySelector('.topbar-right .btn-primary');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+    const card = document.getElementById('weeklyReportCard');
+    card.style.display = 'block';
+    document.getElementById('weeklyReportContent').innerHTML =
+      `<div style="padding:24px;text-align:center"><span class="spinner"></span><p style="margin-top:12px;color:var(--text-muted)">Gemini is analysing your week...</p></div>`;
+
+    try {
+      const data = await apiCall('/api/analytics/weekly');
+
+      // Update score circle
+      const score = data.productivity_score || 0;
+      document.getElementById('scoreCircle').textContent = score;
+      document.getElementById('scoreCircle').style.borderColor =
+        score >= 70 ? 'var(--success)' : score >= 40 ? 'var(--warning)' : 'var(--danger)';
+      document.getElementById('scoreLabel').textContent = data.summary || '';
+
+      if (data.grade) {
+        document.getElementById('reportGrade').textContent = `Grade: ${data.grade}`;
+      }
+
+      document.getElementById('weeklyReportContent').innerHTML = `
+        <div class="grid-2" style="gap:20px;margin-bottom:20px">
+          <div>
+            <div class="report-section">
+              <div class="report-label">🏆 This Week's Wins</div>
+              <ul class="report-list">${(data.wins||[]).map(w=>`<li>${w}</li>`).join('')}</ul>
+            </div>
+            <div class="report-section">
+              <div class="report-label">🎯 Next Week Priorities</div>
+              <ul class="report-list">${(data.next_week_priorities||[]).map(p=>`<li>${p}</li>`).join('')}</ul>
+            </div>
+          </div>
+          <div>
+            <div class="report-section">
+              <div class="report-label">🔍 Key Insight</div>
+              <p style="font-size:0.875rem;line-height:1.7;color:var(--text-main)">${data.top_insight||''}</p>
+            </div>
+            <div class="report-section">
+              <div class="report-label">📉 Missed Tasks Analysis</div>
+              <p style="font-size:0.875rem;line-height:1.7;color:var(--text-main)">${data.missed_analysis||'No missed tasks!'}</p>
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--bg);border-radius:var(--radius-sm);padding:16px;border-left:4px solid var(--primary)">
+          <div class="report-label">💬 Message from Your AI Coach</div>
+          <p style="font-size:0.9rem;line-height:1.7;color:var(--text-main);margin:0">${data.motivational_close||''}</p>
+        </div>`;
+
+      showToast('✅ Weekly report generated!', 'success');
+    } catch(e) {
+      document.getElementById('weeklyReportContent').innerHTML =
+        `<div class="empty-state"><div class="icon">⚠️</div><p>Could not generate report. Is the backend running?</p></div>`;
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '🤖 AI Weekly Report';
+  }
+</script>
 </body>
 </html>

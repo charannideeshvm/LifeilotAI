@@ -29,10 +29,16 @@ async function loadTasks() {
   try {
     const snap = await db.collection('tasks')
       .where('userId', '==', currentUser.uid)
-      .orderBy('createdAt', 'desc')
       .get();
 
-    allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allTasks = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const aTime = a.createdAt?.toMillis?.() || 0;
+        const bTime = b.createdAt?.toMillis?.() || 0;
+        return bTime - aTime;
+      });
+
     renderTasks();
     updateTaskCount();
   } catch (e) {
