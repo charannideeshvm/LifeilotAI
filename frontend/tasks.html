@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tasks — LifePilot AI</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/dark-mode.css" />
+  <style>
+    .filters { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
+    .filter-btn { padding:6px 14px; border-radius:999px; border:1.5px solid var(--border); background:var(--bg-card); color:var(--text-muted); font-size:0.8rem; font-weight:600; cursor:pointer; transition:var(--transition); }
+    .filter-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .search-box { padding:8px 14px; border:1.5px solid var(--border); border-radius:999px; font-size:0.875rem; background:var(--bg-card); color:var(--text-main); outline:none; min-width:220px; }
+    .search-box:focus { border-color:var(--primary); }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><h1>🧭 LifePilot AI</h1><p>Never Miss What Matters</p></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+      <a href="today.html"     class="nav-item"><span class="icon">☀️</span> Today's Plan</a>
+      <a href="tasks.html"     class="nav-item active"><span class="icon">✅</span> Tasks</a>
+      <a href="calendar.html"  class="nav-item"><span class="icon">📅</span> Calendar</a>
+      <div class="nav-section-label">Growth</div>
+      <a href="goals.html"     class="nav-item"><span class="icon">🎯</span> Goals</a>
+      <a href="habits.html"    class="nav-item"><span class="icon">🔄</span> Habits</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📊</span> Analytics</a>
+      <div class="nav-section-label">AI</div>
+      <a href="chat.html"      class="nav-item"><span class="icon">🤖</span> AI Coach</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div class="user-info"><div class="name" id="sidebarName">Loading...</div><div class="email" id="sidebarEmail"></div></div>
+      </div>
+      <a href="settings.html" class="nav-item" style="margin-top:8px"><span class="icon">⚙️</span> Settings</a>
+      <button onclick="handleLogout()" class="nav-item" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.7);text-align:left;margin-top:4px"><span class="icon">🚪</span> Logout</button>
+    </div>
+  </aside>
+  <div id="sidebarOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99"></div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+        <div style="margin-left:8px">
+          <h2>Task Manager</h2>
+          <p id="taskCountLabel">Loading...</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="dark-toggle" id="darkToggle">🌙</button>
+        <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ New Task</button>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <!-- Filters -->
+      <div class="filters">
+        <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search tasks..." oninput="filterTasks()" />
+        <button class="filter-btn active" data-filter="all"       onclick="setFilter(this,'all')">All</button>
+        <button class="filter-btn"        data-filter="pending"   onclick="setFilter(this,'pending')">Pending</button>
+        <button class="filter-btn"        data-filter="completed" onclick="setFilter(this,'completed')">Done</button>
+        <button class="filter-btn"        data-filter="urgent"    onclick="setFilter(this,'urgent')">🔴 Urgent</button>
+        <button class="filter-btn"        data-filter="high"      onclick="setFilter(this,'high')">🟡 High</button>
+      </div>
+
+      <!-- Task List -->
+      <div class="card">
+        <div id="taskListContainer">
+          <div class="empty-state"><div class="icon">⏳</div><p>Loading tasks...</p></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Create / Edit Task Modal -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">Create New Task</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Task Title *</label>
+      <input type="text" id="taskTitle" class="form-control" placeholder="e.g. Complete math assignment" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea id="taskDesc" class="form-control" rows="3" placeholder="Optional details..."></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select id="taskCategory" class="form-control">
+          <option value="Study">📚 Study</option>
+          <option value="Work">💼 Work</option>
+          <option value="Personal">👤 Personal</option>
+          <option value="Health">💪 Health</option>
+          <option value="Finance">💰 Finance</option>
+          <option value="Other">📌 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select id="taskPriority" class="form-control">
+          <option value="low">🟢 Low</option>
+          <option value="medium" selected>🔵 Medium</option>
+          <option value="high">🟡 High</option>
+          <option value="urgent">🔴 Urgent</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Deadline</label>
+        <input type="datetime-local" id="taskDeadline" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estimated Time (minutes)</label>
+        <input type="number" id="taskTime" class="form-control" placeholder="e.g. 90" min="5" />
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="saveTaskBtn" onclick="saveTask()">Create Task</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/tasks.js"></script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LifePilot AI — Never Miss What Matters</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/dark-mode.css" />
+  <style>
+    body { margin: 0; }
+
+    /* Hero */
+    .landing-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 48px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .landing-nav .logo { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+    .landing-nav .nav-links { display: flex; align-items: center; gap: 16px; }
+
+    .hero {
+      min-height: 80vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 80px 24px;
+      background: linear-gradient(135deg, #ede9fe 0%, #e0f2fe 100%);
+    }
+    body.dark .hero { background: linear-gradient(135deg, #1e1b4b 0%, #0c4a6e 100%); }
+
+    .hero-content { max-width: 720px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 999px; padding: 6px 16px;
+      font-size: 0.8rem; font-weight: 600; color: var(--primary);
+      margin-bottom: 24px;
+    }
+    .hero h1 { font-size: 3.2rem; font-weight: 800; color: var(--text-main); line-height: 1.15; margin-bottom: 20px; }
+    .hero h1 span { color: var(--primary); }
+    .hero p { font-size: 1.15rem; color: var(--text-muted); max-width: 560px; margin: 0 auto 36px; }
+    .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    /* Features */
+    .features { padding: 80px 48px; background: var(--bg); }
+    .section-label { text-align: center; margin-bottom: 48px; }
+    .section-label h2 { font-size: 2rem; color: var(--text-main); margin-bottom: 8px; }
+    .section-label p { color: var(--text-muted); }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px; max-width: 1100px; margin: 0 auto;
+    }
+    .feature-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 28px;
+      transition: var(--transition);
+    }
+    .feature-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .feature-icon { font-size: 2rem; margin-bottom: 14px; }
+    .feature-card h3 { color: var(--text-main); margin-bottom: 8px; }
+    .feature-card p { font-size: 0.875rem; }
+
+    /* CTA */
+    .cta-section {
+      padding: 80px 48px; text-align: center;
+      background: var(--primary);
+    }
+    .cta-section h2 { font-size: 2rem; color: #fff; margin-bottom: 16px; }
+    .cta-section p { color: rgba(255,255,255,0.8); margin-bottom: 32px; }
+    .btn-white { background: #fff; color: var(--primary); font-weight: 700; padding: 14px 32px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-size: 1rem; transition: var(--transition); }
+    .btn-white:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+
+    /* Footer */
+    .footer { padding: 28px 48px; background: var(--bg-card); border-top: 1px solid var(--border); text-align: center; }
+    .footer p { font-size: 0.8rem; color: var(--text-muted); }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2rem; }
+      .landing-nav { padding: 16px 20px; }
+      .features, .cta-section { padding: 48px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="landing-nav">
+    <div class="logo">🧭 LifePilot AI</div>
+    <div class="nav-links">
+      <button class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()">🌙</button>
+      <a href="login.html" class="btn btn-secondary btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">✨ Powered by Google Gemini AI</div>
+      <h1>Never Miss <span>What Matters</span> Again</h1>
+      <p>LifePilot AI is your intelligent productivity companion. It predicts missed deadlines, builds your schedule, breaks down tasks, and coaches you to peak performance.</p>
+      <div class="hero-buttons">
+        <a href="register.html" class="btn btn-primary btn-lg">🚀 Start Free Today</a>
+        <a href="login.html" class="btn btn-secondary btn-lg">Sign In</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="section-label">
+      <h2>Everything You Need to Stay On Top</h2>
+      <p>AI-powered features that go beyond simple reminders</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Smart Prioritization</h3>
+        <p>Gemini AI ranks your tasks by urgency and importance, explaining exactly why each task matters right now.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚠️</div>
+        <h3>Deadline Risk Prediction</h3>
+        <p>Get a risk score before it's too late. The AI predicts which deadlines you're likely to miss and why.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>Daily AI Planner</h3>
+        <p>Wake up to a personalized schedule built by AI — balanced, realistic, and optimized for your energy.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔪</div>
+        <h3>Task Breakdown</h3>
+        <p>Overwhelmed by a big project? AI splits it into small, actionable subtasks you can actually start.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚨</div>
+        <h3>Emergency Rescue Mode</h3>
+        <p>Deadline in 2 hours? Rescue Mode creates the fastest possible completion plan automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Weekly AI Reports</h3>
+        <p>Get a detailed AI analysis of your productivity, habits, focus score, and personalized improvement tips.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <h2>Ready to Take Control of Your Time?</h2>
+    <p>Join thousands of students and professionals who never miss a deadline.</p>
+    <a href="register.html"><button class="btn-white">🚀 Get Started — It's Free</button></a>
+  </section>
+
+  <footer class="footer">
+    <p>🧭 LifePilot AI · Built with ❤️ using Google Gemini · Deployed on Google Cloud Run</p>
+  </footer>
+
+  <script src="js/utils.js"></script>
+</body>
+</html>

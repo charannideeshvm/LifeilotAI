@@ -1,0 +1,47 @@
+/* =============================================
+   LIFEPILOT AI - DARK MODE
+   ============================================= */
+
+body.dark {
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --bg-sidebar: #0f172a;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+  --border: #334155;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.4);
+}
+
+body.dark .stat-icon.blue   { background: rgba(59,130,246,0.15); }
+body.dark .stat-icon.green  { background: rgba(16,185,129,0.15); }
+body.dark .stat-icon.orange { background: rgba(245,158,11,0.15); }
+body.dark .stat-icon.purple { background: rgba(139,92,246,0.15); }
+
+body.dark .form-control { background: #0f172a; color: var(--text-main); }
+body.dark .modal { background: var(--bg-card); }
+body.dark .badge-primary { background: rgba(79,70,229,0.2); }
+body.dark .priority-urgent { background: rgba(239,68,68,0.2); }
+body.dark .priority-high   { background: rgba(245,158,11,0.2); }
+body.dark .priority-medium { background: rgba(14,165,233,0.2); }
+body.dark .priority-low    { background: rgba(16,185,129,0.2); }
+body.dark .risk-low    { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+body.dark .risk-medium { background: rgba(245,158,11,0.2); color: #fcd34d; }
+body.dark .risk-high   { background: rgba(239,68,68,0.2);  color: #fca5a5; }
+
+/* Dark mode toggle button */
+.dark-toggle {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.dark-toggle:hover { background: var(--border); }

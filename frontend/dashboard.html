@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — LifePilot AI</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/dark-mode.css" />
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <h1>🧭 LifePilot AI</h1>
+      <p>Never Miss What Matters</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item active"><span class="icon">🏠</span> Dashboard</a>
+      <a href="today.html"     class="nav-item"><span class="icon">☀️</span> Today's Plan</a>
+      <a href="tasks.html"     class="nav-item"><span class="icon">✅</span> Tasks</a>
+      <a href="calendar.html"  class="nav-item"><span class="icon">📅</span> Calendar</a>
+      <div class="nav-section-label">Growth</div>
+      <a href="goals.html"     class="nav-item"><span class="icon">🎯</span> Goals</a>
+      <a href="habits.html"    class="nav-item"><span class="icon">🔄</span> Habits</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📊</span> Analytics</a>
+      <div class="nav-section-label">AI</div>
+      <a href="chat.html"      class="nav-item"><span class="icon">🤖</span> AI Coach</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div class="user-info">
+          <div class="name" id="sidebarName">Loading...</div>
+          <div class="email" id="sidebarEmail"></div>
+        </div>
+      </div>
+      <a href="settings.html" class="nav-item" style="margin-top:8px"><span class="icon">⚙️</span> Settings</a>
+      <button onclick="handleLogout()" class="nav-item" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.7);text-align:left;margin-top:4px">
+        <span class="icon">🚪</span> Logout
+      </button>
+    </div>
+  </aside>
+  <div id="sidebarOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99"></div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+        <div style="margin-left:8px">
+          <h2 id="greetingText">Good morning! 👋</h2>
+          <p id="dateText"></p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="dark-toggle" id="darkToggle">🌙</button>
+        <a href="tasks.html" class="btn btn-primary btn-sm">+ New Task</a>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <!-- Stats -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-icon blue">📋</div>
+          <div class="stat-info">
+            <div class="value" id="statTotal">—</div>
+            <div class="label">Total Tasks</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info">
+            <div class="value" id="statDone">—</div>
+            <div class="label">Completed</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">⏰</div>
+          <div class="stat-info">
+            <div class="value" id="statDue">—</div>
+            <div class="label">Due Today</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">🔥</div>
+          <div class="stat-info">
+            <div class="value" id="statStreak">—</div>
+            <div class="label">Day Streak</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:20px">
+
+        <!-- Today's Tasks -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📋 Today's Tasks</div>
+              <div class="card-subtitle" id="todaySubtitle">Loading...</div>
+            </div>
+            <a href="today.html" class="btn btn-secondary btn-sm">View All</a>
+          </div>
+          <div id="todayTaskList">
+            <div class="empty-state">
+              <div class="icon">⏳</div>
+              <p>Loading tasks...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Summary -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🤖 AI Daily Brief</div>
+              <div class="card-subtitle">Powered by Gemini</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadAISummary()">↻ Refresh</button>
+          </div>
+          <div id="aiSummaryContent">
+            <div class="empty-state">
+              <div class="icon">🤖</div>
+              <h3>AI Brief</h3>
+              <p>Click Refresh to get your personalized daily summary from Gemini AI.</p>
+              <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="loadAISummary()">Generate Brief</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Urgent Tasks Row -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🚨 High Priority & At-Risk Tasks</div>
+            <div class="card-subtitle">Tasks needing immediate attention</div>
+          </div>
+          <a href="tasks.html" class="btn btn-secondary btn-sm">All Tasks</a>
+        </div>
+        <div id="urgentTaskList">
+          <div class="empty-state"><div class="icon">🎉</div><p>No urgent tasks right now!</p></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/tasks.js"></script>
+<script>
+  // Dashboard init
+  auth.onAuthStateChanged(async user => {
+    if (!user) return;
+
+    // Set greeting
+    document.getElementById('greetingText').textContent = `${getGreeting()}, ${user.displayName || 'there'}! 👋`;
+    document.getElementById('dateText').textContent = new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+    // Set sidebar user
+    document.getElementById('sidebarName').textContent  = user.displayName || 'User';
+    document.getElementById('sidebarEmail').textContent = user.email;
+    document.getElementById('sidebarAvatar').textContent = (user.displayName || 'U')[0].toUpperCase();
+
+    // Load data
+    await loadDashboardStats(user.uid);
+    await loadTodayTasksDashboard(user.uid);
+    await loadUrgentTasks(user.uid);
+  });
+
+  async function loadDashboardStats(uid) {
+    try {
+      const snap = await db.collection('tasks').where('userId', '==', uid).get();
+      const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const today = getTodayString();
+      const total     = tasks.length;
+      const completed = tasks.filter(t => t.status === 'completed').length;
+      const dueToday  = tasks.filter(t => t.deadline && t.deadline.toDate && t.deadline.toDate().toISOString().split('T')[0] === today && t.status !== 'completed').length;
+
+      document.getElementById('statTotal').textContent  = total;
+      document.getElementById('statDone').textContent   = completed;
+      document.getElementById('statDue').textContent    = dueToday;
+      document.getElementById('statStreak').textContent = '🔥 5'; // placeholder
+    } catch (e) {
+      console.error('Stats error:', e);
+    }
+  }
+
+  async function loadTodayTasksDashboard(uid) {
+    try {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+      const snap = await db.collection('tasks')
+        .where('userId', '==', uid)
+        .where('deadline', '>=', today)
+        .where('deadline', '<', tomorrow)
+        .limit(5)
+        .get();
+
+      const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const container = document.getElementById('todayTaskList');
+      document.getElementById('todaySubtitle').textContent = `${tasks.length} task${tasks.length !== 1 ? 's' : ''} due today`;
+
+      if (!tasks.length) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">☀️</div><p>No tasks due today — enjoy the day!</p></div>`;
+        return;
+      }
+
+      container.innerHTML = `<div class="task-list">${tasks.map(t => `
+        <div class="task-item ${t.status === 'completed' ? 'completed' : ''}">
+          <div class="task-check ${t.status === 'completed' ? 'checked' : ''}" onclick="toggleTaskDone('${t.id}', '${t.status}')">
+            ${t.status === 'completed' ? '✓' : ''}
+          </div>
+          <div class="task-body">
+            <div class="task-title">${t.title}</div>
+            <div class="task-meta">
+              ${categoryIcon(t.category)} ${t.category || 'Other'}
+              · ${priorityBadge(t.priority)}
+            </div>
+          </div>
+        </div>
+      `).join('')}</div>`;
+    } catch (e) {
+      console.error('Today tasks error:', e);
+    }
+  }
+
+  async function loadUrgentTasks(uid) {
+    try {
+      const snap = await db.collection('tasks')
+        .where('userId', '==', uid)
+        .where('priority', 'in', ['urgent', 'high'])
+        .where('status', '!=', 'completed')
+        .limit(5)
+        .get();
+
+      const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const container = document.getElementById('urgentTaskList');
+
+      if (!tasks.length) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">🎉</div><p>No urgent tasks right now!</p></div>`;
+        return;
+      }
+
+      container.innerHTML = `<div class="task-list">${tasks.map(t => `
+        <div class="task-item">
+          <div class="task-body">
+            <div class="task-title">${t.title}</div>
+            <div class="task-meta">
+              ${daysLeftLabel(t.deadline?.toDate?.())}
+              · ${priorityBadge(t.priority)}
+              · ${t.riskScore ? riskBadge(t.riskScore) : ''}
+            </div>
+          </div>
+          <a href="tasks.html" class="btn btn-secondary btn-sm">View</a>
+        </div>
+      `).join('')}</div>`;
+    } catch (e) {
+      console.error('Urgent tasks error:', e);
+    }
+  }
+
+  async function loadAISummary() {
+    const container = document.getElementById('aiSummaryContent');
+    container.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:20px"><span class="spinner"></span><span>Gemini is thinking...</span></div>`;
+    try {
+      const data = await apiCall('/api/ai/daily-brief', 'POST');
+      container.innerHTML = `
+        <div style="padding:4px">
+          <p style="font-size:0.9rem;line-height:1.7;color:var(--text-main)">${data.brief}</p>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:0.75rem;color:var(--text-muted)">
+            Generated by Gemini AI · ${new Date().toLocaleTimeString()}
+          </div>
+        </div>`;
+    } catch (e) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Could not load AI brief. Make sure the backend is running.</p></div>`;
+    }
+  }
+</script>
+</body>
+</html>

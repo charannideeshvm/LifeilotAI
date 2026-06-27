@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — LifePilot AI</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/dark-mode.css" />
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .auth-container { width: 100%; max-width: 420px; }
+    .auth-header { text-align: center; margin-bottom: 32px; }
+    .auth-logo { font-size: 2.5rem; margin-bottom: 8px; }
+    .auth-header h2 { color: var(--text-main); margin-bottom: 4px; }
+    .auth-header p { font-size: 0.875rem; }
+    .auth-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-lg); }
+    .auth-footer { text-align: center; margin-top: 20px; font-size: 0.875rem; color: var(--text-muted); }
+    .error-msg { background: #fee2e2; color: #991b1b; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.875rem; margin-bottom: 16px; display: none; }
+    body.dark .error-msg { background: rgba(239,68,68,0.2); color: #fca5a5; }
+    .dark-btn-pos { position: fixed; top: 20px; right: 20px; }
+  </style>
+</head>
+<body>
+  <button class="dark-toggle dark-btn-pos" id="darkToggle" onclick="toggleDarkMode()">🌙</button>
+
+  <div class="auth-container">
+    <div class="auth-header">
+      <div class="auth-logo">🧭</div>
+      <h2>Create your account</h2>
+      <p>Start your journey to peak productivity</p>
+    </div>
+
+    <div class="auth-card">
+      <div class="error-msg" id="errorMsg"></div>
+
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" id="name" class="form-control" placeholder="Alex Johnson" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input type="email" id="email" class="form-control" placeholder="you@example.com" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="At least 8 characters" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        <input type="password" id="confirmPassword" class="form-control" placeholder="Repeat password" />
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;justify-content:center" id="registerBtn" onclick="handleRegister()">
+        Create Account
+      </button>
+    </div>
+
+    <div class="auth-footer">
+      Already have an account? <a href="login.html">Sign in</a>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
