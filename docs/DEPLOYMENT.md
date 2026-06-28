@@ -207,7 +207,7 @@ Now that the backend has a real URL, update `frontend/js/utils.js`:
 
 ```javascript
 // Replace this line
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://lifeilotai-491066567011.europe-west1.run.app';
 
 // With your actual Cloud Run URL
 const API_BASE = 'https://lifepilot-ai-backend-xxxx-uc.a.run.app';

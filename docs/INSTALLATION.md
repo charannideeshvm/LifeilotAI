@@ -105,8 +105,8 @@ The app will open at `http://127.0.0.1:5500/frontend/index.html`
 
 Visit these URLs to confirm:
 - Frontend: `http://127.0.0.1:5500/frontend/index.html`
-- Backend health: `http://localhost:8000/health`
-- API docs: `http://localhost:8000/docs`
+- Backend health: `https://lifeilotai-491066567011.europe-west1.run.app/health`
+- API docs: `https://lifeilotai-491066567011.europe-west1.run.app/docs`
 
 ---
 

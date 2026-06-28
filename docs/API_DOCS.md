@@ -1,6 +1,6 @@
 # 📡 API Documentation — LifePilot AI
 
-Base URL (local): `http://localhost:8000`
+Base URL (local): `https://lifeilotai-491066567011.europe-west1.run.app`
 Base URL (production): `https://your-cloud-run-url.a.run.app`
 
 Interactive docs: `{BASE_URL}/docs`

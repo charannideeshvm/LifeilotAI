@@ -23,8 +23,8 @@ app = FastAPI(
     title="LifePilot AI API",
     description="AI-powered productivity companion backend",
     version="1.0.0",
-    docs_url="/docs",       # Swagger UI at http://localhost:8000/docs
-    redoc_url="/redoc"      # ReDoc UI at http://localhost:8000/redoc
+    docs_url="/docs",       # Swagger UI at https://lifeilotai-491066567011.europe-west1.run.app/docs
+    redoc_url="/redoc"      # ReDoc UI at https://lifeilotai-491066567011.europe-west1.run.app/redoc
 )
 
 # --- CORS Middleware ---
@@ -60,7 +60,7 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"]
 # --- Root Endpoint ---
 @app.get("/")
 async def root():
-    """Health check endpoint. Visit http://localhost:8000 to confirm server is running."""
+    """Health check endpoint. Visit https://lifeilotai-491066567011.europe-west1.run.app to confirm server is running."""
     return {
         "status":  "running",
         "app":     "LifePilot AI",
