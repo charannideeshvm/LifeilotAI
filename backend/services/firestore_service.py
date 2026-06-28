@@ -8,10 +8,10 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from datetime import datetime, timezone
 import logging
 import os
+import json
 
 logger = logging.getLogger(__name__)
 
-# Global db client
 _db = None
 
 def get_db():
@@ -26,32 +26,40 @@ def _init_firebase():
         _db = firestore.client()
         return
 
-    # Try multiple paths for the service account file
+    # Option 1: Read from FIREBASE_CREDENTIALS environment variable (Cloud Run)
+    creds_json = os.getenv("FIREBASE_CREDENTIALS")
+    if creds_json:
+        try:
+            creds_dict = json.loads(creds_json)
+            cred = credentials.Certificate(creds_dict)
+            firebase_admin.initialize_app(cred)
+            logger.info("Firebase initialized from FIREBASE_CREDENTIALS env var")
+            _db = firestore.client()
+            return
+        except Exception as e:
+            logger.error(f"Failed to init from env var: {e}")
+
+    # Option 2: Read from file (local development)
     possible_paths = [
-        "/app/backend/firebase-service-account.json",
         os.path.join(os.path.dirname(__file__), "firebase-service-account.json"),
+        "/app/backend/firebase-service-account.json",
+        "/app/firebase-service-account.json",
         "firebase-service-account.json",
     ]
 
-    sa_path = None
     for path in possible_paths:
         if os.path.exists(path):
-            sa_path = path
-            break
+            cred = credentials.Certificate(path)
+            firebase_admin.initialize_app(cred)
+            logger.info(f"Firebase initialized from file: {path}")
+            _db = firestore.client()
+            return
 
-    if sa_path:
-        cred = credentials.Certificate(sa_path)
-        firebase_admin.initialize_app(cred)
-        logger.info(f"Firebase initialized from file: {sa_path}")
-    else:
-        # Fall back to Application Default Credentials
-        logger.warning("No service account file found, trying default credentials")
-        firebase_admin.initialize_app()
-
+    # Option 3: Application Default Credentials
+    logger.warning("No credentials found, trying default credentials")
+    firebase_admin.initialize_app()
     _db = firestore.client()
-    logger.info("Firestore client ready")
 
-# Initialize on import but don't crash if it fails
 try:
     _init_firebase()
 except Exception as e:
@@ -86,18 +94,10 @@ def _doc_to_dict(doc) -> dict:
     data['id'] = doc.id
     return data
 
-# =============================================
-# TASK OPERATIONS
-# =============================================
-
 async def get_tasks(user_id: str) -> list:
     try:
         db = get_db()
-        docs = (
-            db.collection('tasks')
-              .where(filter=FieldFilter('userId', '==', user_id))
-              .stream()
-        )
+        docs = db.collection('tasks').where(filter=FieldFilter('userId', '==', user_id)).stream()
         tasks = [_doc_to_dict(d) for d in docs]
         tasks.sort(key=lambda t: t.get('createdAt') or '', reverse=True)
         return tasks
@@ -106,8 +106,8 @@ async def get_tasks(user_id: str) -> list:
         raise
 
 async def get_task(task_id: str, user_id: str) -> dict:
-    db   = get_db()
-    doc  = db.collection('tasks').document(task_id).get()
+    db = get_db()
+    doc = db.collection('tasks').document(task_id).get()
     data = _doc_to_dict(doc)
     if not data or data.get('userId') != user_id:
         return None
@@ -115,47 +115,37 @@ async def get_task(task_id: str, user_id: str) -> dict:
 
 async def create_task(user_id: str, task_data: dict) -> dict:
     db = get_db()
-    task_data['userId']       = user_id
-    task_data['status']       = 'pending'
-    task_data['riskScore']    = None
-    task_data['subtasks']     = []
+    task_data['userId'] = user_id
+    task_data['status'] = 'pending'
+    task_data['riskScore'] = None
+    task_data['subtasks'] = []
     task_data['aiSuggestion'] = None
-    task_data['createdAt']    = firestore.SERVER_TIMESTAMP
-    task_data['updatedAt']    = firestore.SERVER_TIMESTAMP
-    task_data['completedAt']  = None
-
+    task_data['createdAt'] = firestore.SERVER_TIMESTAMP
+    task_data['updatedAt'] = firestore.SERVER_TIMESTAMP
+    task_data['completedAt'] = None
     if 'deadline' in task_data and isinstance(task_data['deadline'], str):
-        task_data['deadline'] = datetime.fromisoformat(
-            task_data['deadline'].replace('Z', '+00:00')
-        )
-
+        task_data['deadline'] = datetime.fromisoformat(task_data['deadline'].replace('Z', '+00:00'))
     ref = db.collection('tasks').document()
     ref.set(task_data)
     return _doc_to_dict(ref.get())
 
 async def update_task(task_id: str, user_id: str, updates: dict) -> dict:
-    db  = get_db()
+    db = get_db()
     ref = db.collection('tasks').document(task_id)
     doc = ref.get()
     if not doc.exists or doc.to_dict().get('userId') != user_id:
         return None
-
     updates = {k: v for k, v in updates.items() if v is not None}
     updates['updatedAt'] = firestore.SERVER_TIMESTAMP
-
     if 'deadline' in updates and isinstance(updates['deadline'], str):
-        updates['deadline'] = datetime.fromisoformat(
-            updates['deadline'].replace('Z', '+00:00')
-        )
-
+        updates['deadline'] = datetime.fromisoformat(updates['deadline'].replace('Z', '+00:00'))
     if updates.get('status') == 'completed':
         updates['completedAt'] = firestore.SERVER_TIMESTAMP
-
     ref.update(updates)
     return _doc_to_dict(ref.get())
 
 async def delete_task(task_id: str, user_id: str) -> bool:
-    db  = get_db()
+    db = get_db()
     ref = db.collection('tasks').document(task_id)
     doc = ref.get()
     if not doc.exists or doc.to_dict().get('userId') != user_id:
@@ -164,13 +154,9 @@ async def delete_task(task_id: str, user_id: str) -> bool:
     return True
 
 async def get_todays_tasks(user_id: str) -> list:
-    db    = get_db()
+    db = get_db()
     today = datetime.now(timezone.utc).date()
-    docs  = (
-        db.collection('tasks')
-          .where(filter=FieldFilter('userId', '==', user_id))
-          .stream()
-    )
+    docs = db.collection('tasks').where(filter=FieldFilter('userId', '==', user_id)).stream()
     result = []
     for d in docs:
         task = _doc_to_dict(d)
@@ -180,25 +166,16 @@ async def get_todays_tasks(user_id: str) -> list:
         if not deadline:
             continue
         try:
-            deadline_date = datetime.fromisoformat(deadline).date()
-            if deadline_date == today:
+            if datetime.fromisoformat(deadline).date() == today:
                 result.append(task)
         except (ValueError, TypeError):
             continue
     return result
 
-# =============================================
-# GOAL OPERATIONS
-# =============================================
-
 async def get_goals(user_id: str) -> list:
     try:
-        db   = get_db()
-        docs = (
-            db.collection('goals')
-              .where(filter=FieldFilter('userId', '==', user_id))
-              .stream()
-        )
+        db = get_db()
+        docs = db.collection('goals').where(filter=FieldFilter('userId', '==', user_id)).stream()
         goals = [_doc_to_dict(d) for d in docs]
         goals.sort(key=lambda g: g.get('createdAt') or '', reverse=True)
         return goals
@@ -208,22 +185,18 @@ async def get_goals(user_id: str) -> list:
 
 async def create_goal(user_id: str, goal_data: dict) -> dict:
     db = get_db()
-    goal_data['userId']    = user_id
-    goal_data['progress']  = 0
-    goal_data['status']    = 'active'
+    goal_data['userId'] = user_id
+    goal_data['progress'] = 0
+    goal_data['status'] = 'active'
     goal_data['createdAt'] = firestore.SERVER_TIMESTAMP
-
     if 'targetDate' in goal_data and isinstance(goal_data['targetDate'], str):
-        goal_data['targetDate'] = datetime.fromisoformat(
-            goal_data['targetDate'].replace('Z', '+00:00')
-        )
-
+        goal_data['targetDate'] = datetime.fromisoformat(goal_data['targetDate'].replace('Z', '+00:00'))
     ref = db.collection('goals').document()
     ref.set(goal_data)
     return _doc_to_dict(ref.get())
 
 async def update_goal(goal_id: str, user_id: str, updates: dict) -> dict:
-    db  = get_db()
+    db = get_db()
     ref = db.collection('goals').document(goal_id)
     doc = ref.get()
     if not doc.exists or doc.to_dict().get('userId') != user_id:
@@ -233,7 +206,7 @@ async def update_goal(goal_id: str, user_id: str, updates: dict) -> dict:
     return _doc_to_dict(ref.get())
 
 async def delete_goal(goal_id: str, user_id: str) -> bool:
-    db  = get_db()
+    db = get_db()
     ref = db.collection('goals').document(goal_id)
     doc = ref.get()
     if not doc.exists or doc.to_dict().get('userId') != user_id:
@@ -241,18 +214,10 @@ async def delete_goal(goal_id: str, user_id: str) -> bool:
     ref.delete()
     return True
 
-# =============================================
-# HABIT OPERATIONS
-# =============================================
-
 async def get_habits(user_id: str) -> list:
     try:
-        db   = get_db()
-        docs = (
-            db.collection('habits')
-              .where(filter=FieldFilter('userId', '==', user_id))
-              .stream()
-        )
+        db = get_db()
+        docs = db.collection('habits').where(filter=FieldFilter('userId', '==', user_id)).stream()
         return [_doc_to_dict(d) for d in docs]
     except Exception as e:
         logger.error(f"get_habits error: {e}")
@@ -260,42 +225,34 @@ async def get_habits(user_id: str) -> list:
 
 async def create_habit(user_id: str, habit_data: dict) -> dict:
     db = get_db()
-    habit_data['userId']         = user_id
-    habit_data['streak']         = 0
-    habit_data['longestStreak']  = 0
+    habit_data['userId'] = user_id
+    habit_data['streak'] = 0
+    habit_data['longestStreak'] = 0
     habit_data['completedDates'] = []
-    habit_data['createdAt']      = firestore.SERVER_TIMESTAMP
+    habit_data['createdAt'] = firestore.SERVER_TIMESTAMP
     ref = db.collection('habits').document()
     ref.set(habit_data)
     return _doc_to_dict(ref.get())
 
 async def complete_habit_today(habit_id: str, user_id: str) -> dict:
-    db  = get_db()
+    db = get_db()
     ref = db.collection('habits').document(habit_id)
     doc = ref.get()
     if not doc.exists or doc.to_dict().get('userId') != user_id:
         return None
-
-    data            = doc.to_dict()
-    today_str       = datetime.now().strftime('%Y-%m-%d')
+    data = doc.to_dict()
+    today_str = datetime.now().strftime('%Y-%m-%d')
     completed_dates = data.get('completedDates', [])
-
     if today_str in completed_dates:
         return _doc_to_dict(doc)
-
     completed_dates.append(today_str)
     new_streak = data.get('streak', 0) + 1
-    longest    = max(data.get('longestStreak', 0), new_streak)
-
-    ref.update({
-        'completedDates': completed_dates,
-        'streak':         new_streak,
-        'longestStreak':  longest
-    })
+    longest = max(data.get('longestStreak', 0), new_streak)
+    ref.update({'completedDates': completed_dates, 'streak': new_streak, 'longestStreak': longest})
     return _doc_to_dict(ref.get())
 
 async def update_habit(habit_id: str, user_id: str, updates: dict) -> dict:
-    db  = get_db()
+    db = get_db()
     ref = db.collection('habits').document(habit_id)
     doc = ref.get()
     if not doc.exists or doc.to_dict().get('userId') != user_id:
@@ -305,7 +262,7 @@ async def update_habit(habit_id: str, user_id: str, updates: dict) -> dict:
     return _doc_to_dict(ref.get())
 
 async def delete_habit(habit_id: str, user_id: str) -> bool:
-    db  = get_db()
+    db = get_db()
     ref = db.collection('habits').document(habit_id)
     doc = ref.get()
     if not doc.exists or doc.to_dict().get('userId') != user_id:
@@ -313,41 +270,27 @@ async def delete_habit(habit_id: str, user_id: str) -> bool:
     ref.delete()
     return True
 
-# =============================================
-# CHAT HISTORY
-# =============================================
-
 async def save_chat_message(user_id: str, role: str, content: str):
     db = get_db()
     db.collection('chat_history').add({
-        'userId':    user_id,
-        'role':      role,
-        'content':   content,
+        'userId': user_id, 'role': role, 'content': content,
         'timestamp': firestore.SERVER_TIMESTAMP
     })
 
 async def get_chat_history(user_id: str, limit: int = 20) -> list:
-    db   = get_db()
-    docs = (
-        db.collection('chat_history')
-          .where(filter=FieldFilter('userId', '==', user_id))
-          .stream()
-    )
+    db = get_db()
+    docs = db.collection('chat_history').where(filter=FieldFilter('userId', '==', user_id)).stream()
     messages = [_doc_to_dict(d) for d in docs]
     messages.sort(key=lambda m: m.get('timestamp') or '')
     return messages[-limit:]
 
-# =============================================
-# USER OPERATIONS
-# =============================================
-
 async def get_user(user_id: str) -> dict:
-    db  = get_db()
+    db = get_db()
     doc = db.collection('users').document(user_id).get()
     return _doc_to_dict(doc)
 
 async def update_user(user_id: str, updates: dict) -> dict:
-    db  = get_db()
+    db = get_db()
     ref = db.collection('users').document(user_id)
     updates = {k: v for k, v in updates.items() if v is not None}
     ref.set(updates, merge=True)
