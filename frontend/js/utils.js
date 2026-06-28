@@ -119,7 +119,9 @@ function riskBadge(score) {
 }
 
 // --- API Helper ---
-const API_BASE = 'https://lifeilotai-491066567011.europe-west1.run.app';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000'
+  : 'https://lifeilotai-491066567011.europe-west1.run.app';
 
 async function apiCall(endpoint, method = 'GET', body = null) {
   const token = await getAuthToken();
