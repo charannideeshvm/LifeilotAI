@@ -34,7 +34,7 @@ class Settings:
     # We split the comma-separated string into a list
     ALLOWED_ORIGINS: list = os.getenv(
         "ALLOWED_ORIGINS",
-        "http://localhost:5500,http://127.0.0.1:5500"
+        "http://localhost:5500,http://127.0.0.1:5500,https://lifepilot-ai-e8699.web.app"
     ).split(",")
 
     def validate(self):
